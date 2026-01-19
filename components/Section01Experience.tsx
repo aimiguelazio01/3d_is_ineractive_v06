@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useEffect, createContext, useContext, useState, useCallback } from 'react';
+import React, { useRef, useMemo, useEffect, createContext, useContext, useState, useCallback, Suspense } from 'react';
 import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 import * as THREE from 'three';
@@ -183,8 +183,9 @@ const Particles = () => {
   // Load original color texture
   const colorTexture = useLoader(EXRLoader, '/assets/3d/s01/prt08_col.exr');
 
-  // Dynamically load all 6 target textures
-  const morphTargets = useLoader(EXRLoader, [
+  // Load all 6 target textures
+  // Using explicit array to avoid any potential useLoader issues with dynamic paths
+  const morphTargetPaths = useMemo(() => [
     '/assets/3d/s01/prt01_pos.exr',
     '/assets/3d/s01/prt01_col.exr',
     '/assets/3d/s01/prt02_pos.exr',
@@ -197,7 +198,9 @@ const Particles = () => {
     '/assets/3d/s01/prt05_col.exr',
     '/assets/3d/s01/prt06_pos.exr',
     '/assets/3d/s01/prt06_col.exr',
-  ]);
+  ], []);
+
+  const morphTargets = useLoader(EXRLoader, morphTargetPaths);
 
   useMemo(() => {
     [colorTexture, ...morphTargets].forEach(tex => {
@@ -653,30 +656,32 @@ const Section01Experience: React.FC = () => {
         <Canvas
           style={{ pointerEvents: 'auto' }}
           camera={{ position: [0, 0, 100], fov: 50, far: 10000 }}
-          gl={{ antialias: true, alpha: true }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance"
+          }}
           shadows
+          dpr={[1, 2]}
         >
-          {/* Scene Lighting */}
-          <ambientLight intensity={0.3} />
-          <directionalLight
-            position={[50, 80, 50]}
-            intensity={1.5}
-            castShadow
-            shadow-mapSize-width={2048}
-            shadow-mapSize-height={2048}
-            shadow-camera-far={500}
-            shadow-camera-left={-100}
-            shadow-camera-right={100}
-            shadow-camera-top={100}
-            shadow-camera-bottom={-100}
-          />
-          <pointLight position={[-50, 30, -50]} intensity={0.5} color="#4488ff" />
+          <Suspense fallback={null}>
+            {/* Scene Lighting */}
+            <ambientLight intensity={0.3} />
+            <directionalLight
+              position={[50, 80, 50]}
+              intensity={1.5}
+              castShadow
+              shadow-mapSize-width={1024}
+              shadow-mapSize-height={1024}
+            />
+            <pointLight position={[-50, 30, -50]} intensity={0.5} color="#4488ff" />
 
-          <FloatingButtons activeButtonIdx={activeButtonIdx} onHover={handleNextButton} />
-          <Particles />
-          <EffectComposer>
-            <Bloom luminanceThreshold={0.2} intensity={1.5} radius={0.5} />
-          </EffectComposer>
+            <FloatingButtons activeButtonIdx={activeButtonIdx} onHover={handleNextButton} />
+            <Particles />
+            <EffectComposer>
+              <Bloom luminanceThreshold={0.2} intensity={1.5} radius={0.5} />
+            </EffectComposer>
+          </Suspense>
         </Canvas>
       </MorphContext.Provider>
     </div>
