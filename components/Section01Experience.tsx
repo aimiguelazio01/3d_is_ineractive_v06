@@ -176,29 +176,32 @@ const SimulationShaders = {
   `
 };
 
+// Export paths for global preloading
+export const SECTION01_ASSETS = [
+  '/assets/3d/s01/prt08_col.exr',
+  '/assets/3d/s01/prt01_pos.exr',
+  '/assets/3d/s01/prt01_col.exr',
+  '/assets/3d/s01/prt02_pos.exr',
+  '/assets/3d/s01/prt02_col.exr',
+  '/assets/3d/s01/prt03_pos.exr',
+  '/assets/3d/s01/prt03_col.exr',
+  '/assets/3d/s01/prt04_pos.exr',
+  '/assets/3d/s01/prt04_col.exr',
+  '/assets/3d/s01/prt05_pos.exr',
+  '/assets/3d/s01/prt05_col.exr',
+  '/assets/3d/s01/prt06_pos.exr',
+  '/assets/3d/s01/prt06_col.exr',
+];
+
 const Particles = () => {
   const { gl } = useThree();
   const { hoveredButton } = useContext(MorphContext);
 
   // Load original color texture
-  const colorTexture = useLoader(EXRLoader, '/assets/3d/s01/prt08_col.exr');
+  const colorTexture = useLoader(EXRLoader, SECTION01_ASSETS[0]);
 
   // Load all 6 target textures
-  // Using explicit array to avoid any potential useLoader issues with dynamic paths
-  const morphTargetPaths = useMemo(() => [
-    '/assets/3d/s01/prt01_pos.exr',
-    '/assets/3d/s01/prt01_col.exr',
-    '/assets/3d/s01/prt02_pos.exr',
-    '/assets/3d/s01/prt02_col.exr',
-    '/assets/3d/s01/prt03_pos.exr',
-    '/assets/3d/s01/prt03_col.exr',
-    '/assets/3d/s01/prt04_pos.exr',
-    '/assets/3d/s01/prt04_col.exr',
-    '/assets/3d/s01/prt05_pos.exr',
-    '/assets/3d/s01/prt05_col.exr',
-    '/assets/3d/s01/prt06_pos.exr',
-    '/assets/3d/s01/prt06_col.exr',
-  ], []);
+  const morphTargetPaths = useMemo(() => SECTION01_ASSETS.slice(1), []);
 
   const morphTargets = useLoader(EXRLoader, morphTargetPaths);
 
@@ -246,6 +249,13 @@ const Particles = () => {
 
     const positionVariable = renderer.addVariable('texturePosition', SimulationShaders.fragmentShaderPosition, dtPosition);
     renderer.setVariableDependencies(positionVariable, [positionVariable]);
+
+    // Use HalfFloatType for better performance on Firefox and mobile
+    positionVariable.renderTargets.forEach((target: any) => {
+      target.texture.type = THREE.HalfFloatType;
+      target.texture.minFilter = THREE.NearestFilter;
+      target.texture.magFilter = THREE.NearestFilter;
+    });
 
     positionVariable.material.uniforms.time = { value: 0 };
     positionVariable.material.uniforms.uDelta = { value: 0 };

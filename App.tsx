@@ -7,6 +7,9 @@ import CustomCursor from './components/CustomCursor';
 import SvgFilters from './components/SvgFilters';
 import { SECTIONS } from './constants';
 import { TRANSLATIONS } from './translations';
+import { useLoader } from '@react-three/fiber';
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
+import { SECTION01_ASSETS } from './components/Section01Experience';
 
 const App: React.FC = () => {
   const [isIndexVisible, setIsIndexVisible] = useState(false);
@@ -14,6 +17,17 @@ const App: React.FC = () => {
   const [lang, setLang] = useState<'EN' | 'PT'>('EN');
   const [isAnySectionExpanded, setIsAnySectionExpanded] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Preload Section 01 assets as soon as the app starts
+  useEffect(() => {
+    try {
+      SECTION01_ASSETS.forEach(path => {
+        useLoader.preload(EXRLoader, path);
+      });
+    } catch (e) {
+      console.warn("Preloading failed", e);
+    }
+  }, []);
 
   const t = TRANSLATIONS[lang];
 
